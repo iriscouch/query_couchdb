@@ -241,6 +241,8 @@ Query.prototype.query = function() {
     else if(!op && filter.order) {
       if(filter.order === 'down' && direction === 'equal')
         query.descending = true;
+      else if(filter.order === 'up' && direction === 'equal')
+        query.descending = false;
       else
         throw new Error('Cannot filter: ' + JSON.stringify(filter));
     }
