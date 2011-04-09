@@ -10,6 +10,7 @@ function Query (type) {
   self.db = "";
   self.ddoc = '_design/example';
   self.include_docs = false;
+  self.query_limit = null;
   self.filters = [];
 
   self.type = type;
@@ -42,6 +43,34 @@ Query.prototype.filter = function(condition, val) {
   self.filters.push(filter);
 
   return self.valid();
+}
+
+Query.prototype.order = function(instruction) {
+  var self = this
+    , match
+    ;
+  if(match = /^(-?)(.+)$/.exec(instruction)) { // Assignment expression
+    var dir = match[1]
+      , field = match[2]
+      ;
+
+    dir = { '-': 'down'
+          , '+': 'up'
+          , '' : 'up'
+          }[dir];
+
+    if(!dir)
+      throw new Error('Unknown order instruction: ' + JSON.stringify(instruction));
+
+    var filter = { 'field': field
+                 , 'order': dir
+                 , 'repr' : function() { return 'order ' + dir + ' ' + field }
+                 };
+
+    self.filters.push(filter);
+
+    return self.valid();
+  }
 }
 
 Query.prototype.valid = function() {
@@ -104,15 +133,18 @@ Query.prototype.url = function() {
 Query.prototype.query = function() {
   var self = this;
   var query = { reduce: false
+              , descending: self.descending
               , include_docs: self.include_docs
               };
+
+  if(typeof self.query_limit === 'number')
+    query.limit = self.query_limit;
 
   query.key = [];
   var direction = 'equal';
 
   self.filters.forEach(function(filter) {
     var op = filter.op;
-    debugger;
 
     if(op === '==' || op === '=') {
       if(direction === 'equal')
@@ -153,24 +185,26 @@ Query.prototype.query = function() {
       }
     }
 
+    else if(!op && filter.order) {
+      if(filter.order === 'down' && direction === 'equal')
+        query.descending = true;
+      else
+        throw new Error('Cannot filter: ' + JSON.stringify(filter));
+    }
+
     else
       throw new Error('Unknown filter operation: ' + JSON.stringify(op));
   })
+
+  if(query.key && query.key.length === 0)
+    delete query.key;
 
   return query;
 }
 
 Query.prototype.doc   = function() { this.include_doc = true ; return this };
 Query.prototype.nodoc = function() { this.include_doc = false; return this };
-
-var q = new Query('Page').filter('created_at <=', new Date).doc().cb(function(er, resp, body) {
-  if(er) throw er;
-  debugger;
-  return 1;
-})
-
-console.log('url: %o', q.url());
-throw new Error('done');
+Query.prototype.limit = function(lim) { this.query_limit = lim; return this };
 
 return Query;
 
