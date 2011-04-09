@@ -125,24 +125,40 @@ Query.prototype.go = function(callback) {
 
       var reduce = '_count';
 
-      req.couch({uri:self.ddoc}, function(er, resp, ddoc) {
-        if(er) throw er;
-        ddoc.views = ddoc.views || {};
-        ddoc.views[self.name()] = { 'map':map, 'reduce':reduce };
-        req.couch({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc)}, function(er, resp, body) {
-          if(er) throw er;
+      function store_view(tries) {
+        if(tries <= 0)
+          throw new Error("No more tries remain to store the view: " + self.url());
 
-          // View saved. One more try.
-          req.json({uri:self.url()}, function(er, resp, body) {
-            if(er) throw er;
+        req.couch({uri:self.ddoc}, function(er, resp, ddoc) {
+          if(er) return self.callback && self.callback(er);
 
-            if(resp.status === 200)
-              return self.callback && self.callback(null, body);
-            else
-              return self.callback && self.callback(new Error('Failed to after creating ' + self.url() + ': ' + JSON.stringify(body)));
+          ddoc.views = ddoc.views || {};
+          ddoc.views[self.name()] = { 'map':map, 'reduce':reduce };
+          req.json({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc)}, function(er, resp, body) {
+            if(er) return self.callback && self.callback(er);
+
+            if(resp.status === 409) {
+              console.debug('Retrying on conflict...');
+              return store_view(tries - 1);
+            }
+
+            else if(resp.status !== 201)
+              return self.callback && self.callback(new Error('Error when storing view: ' + JSON.stringify(body)));
+
+            // View saved. One more try.
+            req.json({uri:self.url()}, function(er, resp, body) {
+              if(er) throw er;
+
+              if(resp.status === 200)
+                return self.callback && self.callback(null, body);
+              else
+                return self.callback && self.callback(new Error('Failed to after creating ' + self.url() + ': ' + JSON.stringify(body)));
+            })
           })
         })
-      })
+      } // store_view
+
+      return store_view(5);
     }
   })
 
