@@ -91,7 +91,7 @@ Query.prototype.cb = function(callback) {
   return self;
 }
 
-Query.prototype.go = function(callback) {
+Query.prototype.get = function(callback) {
   var self = this;
 
   if(callback)
@@ -202,7 +202,6 @@ Query.prototype.url = function() {
 Query.prototype.query = function() {
   var self = this;
   var query = { reduce: false
-              , descending: self.descending
               , include_docs: self.include_docs
               };
 
