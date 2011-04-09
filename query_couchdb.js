@@ -7,8 +7,7 @@ define(['./jquery.request'], function(req) {
 function Query (type) {
   var self = this;
 
-  self.db = "";
-  self.ddoc = '_design/example';
+  self.ddoc = Query.ddoc || '_design/example';
   self.include_docs = false;
   self.query_limit = null;
   self.filters = [];
@@ -24,6 +23,8 @@ function Query (type) {
   }
   self.callback = default_callback;
 }
+
+Query.ddoc = null;
 
 Query.prototype.filter = function(condition, val) {
   var self = this;
@@ -96,7 +97,54 @@ Query.prototype.go = function(callback) {
   if(callback)
     self.cb(callback);
 
-  console.log('TODO: Go!');
+  req.json({uri:self.url()}, function(er, resp, body) {
+    if(er) throw er;
+
+    if(resp.status === 200)
+      return self.callback && self.callback(body);
+
+    else if(resp.status !== 404 || body.error !== 'not_found')
+      throw new Error('Unknown response during query ' + self.url() + ': ' + JSON.stringify(body));
+
+    else if(resp.status === 404 && body.error === 'not_found') {
+      // Need to create this query.
+      var fields = [];
+      self.filters.forEach(function(filter) {
+        fields.push('doc[' + JSON.stringify(filter.field) + '] || null');
+      })
+      fields = '[' + fields.join(', ') + ']';
+
+      var map = [ 'function(doc) {'
+                , '  var re = /^' + self.type + '\\//;'
+                , '  var match = re.exec(doc._id);'
+                , '  if(match) {'
+                , '    emit('+fields+', doc);'
+                , '  }'
+                , '}'
+                ].join('\n');
+
+      var reduce = '_count';
+
+      req.couch({uri:self.ddoc}, function(er, resp, ddoc) {
+        if(er) throw er;
+        ddoc.views = ddoc.views || {};
+        ddoc.views[self.name()] = { 'map':map, 'reduce':reduce };
+        req.couch({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc)}, function(er, resp, body) {
+          if(er) throw er;
+
+          // View saved. One more try.
+          req.json({uri:self.url()}, function(er, resp, body) {
+            if(er) throw er;
+
+            if(resp.status === 200)
+              return self.callback && self.callback(body);
+            else
+              throw new Error('Failed to after creating ' + self.url() + ': ' + JSON.stringify(body));
+          })
+        })
+      })
+    }
+  })
 
   return self;
 }
@@ -104,16 +152,21 @@ Query.prototype.go = function(callback) {
 Query.prototype.view = function() {
   var self = this;
 
-  var columns = [ self.type ];
+
+  return [ self.ddoc
+         , '/_view/'
+         , self.name()
+         ].join('');
+}
+
+Query.prototype.name = function() {
+  var self = this;
+
+  var columns = [ 'QC', self.type ];
   for(var a = 0; a < self.filters.length; a++)
     columns.push(self.filters[a].field);
 
-  return [ self.db
-         , '/'
-         , self.ddoc
-         , '/_view/QC-'
-         , columns.join('-')
-         ].join("");
+  return columns.join('-');
 }
 
 Query.prototype.url = function() {
