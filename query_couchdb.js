@@ -101,10 +101,10 @@ Query.prototype.go = function(callback) {
     if(er) throw er;
 
     if(resp.status === 200)
-      return self.callback && self.callback(body);
+      return self.callback && self.callback(null, body);
 
     else if(resp.status !== 404 || body.error !== 'not_found')
-      throw new Error('Unknown response during query ' + self.url() + ': ' + JSON.stringify(body));
+      return self.callback && self.callback(new Error('Unknown response during query ' + self.url() + ': ' + JSON.stringify(body)));
 
     else if(resp.status === 404 && body.error === 'not_found') {
       // Need to create this query.
@@ -137,9 +137,9 @@ Query.prototype.go = function(callback) {
             if(er) throw er;
 
             if(resp.status === 200)
-              return self.callback && self.callback(body);
+              return self.callback && self.callback(null, body);
             else
-              throw new Error('Failed to after creating ' + self.url() + ': ' + JSON.stringify(body));
+              return self.callback && self.callback(new Error('Failed to after creating ' + self.url() + ': ' + JSON.stringify(body)));
           })
         })
       })
