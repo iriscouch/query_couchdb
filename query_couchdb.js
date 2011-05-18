@@ -2,6 +2,14 @@
 //
 // Arbitrary CouchDB queries.
 
+(function() {
+var define = window.define
+if(!define) define = function(deps, module_def) {
+  if(!window.jQuery)
+    throw new Error("Can't find jQuery");
+  return module_def(window.jQuery.request);
+}
+
 define(['./jquery.request'], function(request) {
 
 function Query (type) {
@@ -278,4 +286,5 @@ Query.prototype.limit = function(lim) { this.query_limit = lim; return this };
 
 return Query;
 
-});
+  });
+})();
