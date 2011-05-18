@@ -122,14 +122,17 @@ Query.prototype.get = function(callback) {
       })
       fields = '[' + fields.join(', ') + ']';
 
-      var map = [ 'function(doc) {'
+      var BEGIN = '{'
+        , END   = '}'
+        , map = [ 'function(doc) '+BEGIN
                 , '  var re = /^' + self.type + '\\//;'
                 , '  var match = re.exec(doc._id);'
-                , '  if(match) {'
+                , '  if(match) '+BEGIN
                 , '    emit('+fields+', doc);'
-                , '  }'
-                , '}'
-                ].join('\n');
+                , '  '+END
+                , ''+END
+                ].join('\n')
+        ;
 
       var reduce = '_count';
 
