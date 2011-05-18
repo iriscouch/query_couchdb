@@ -2,7 +2,7 @@
 //
 // Arbitrary CouchDB queries.
 
-define(['./jquery.request'], function(req) {
+define(['./jquery.request'], function(request) {
 
 function Query (type) {
   var self = this;
@@ -97,7 +97,7 @@ Query.prototype.get = function(callback) {
   if(callback)
     self.cb(callback);
 
-  req.json({uri:self.url()}, function(er, resp, body) {
+  request.json({uri:self.url()}, function(er, resp, body) {
     if(er) throw er;
 
     if(resp.status === 200)
@@ -129,12 +129,12 @@ Query.prototype.get = function(callback) {
         if(tries <= 0)
           throw new Error("No more tries remain to store the view: " + self.url());
 
-        req.couch({uri:self.ddoc}, function(er, resp, ddoc) {
+        request.couch({uri:self.ddoc}, function(er, resp, ddoc) {
           if(er) return self.callback && self.callback(er);
 
           ddoc.views = ddoc.views || {};
           ddoc.views[self.name()] = { 'map':map, 'reduce':reduce };
-          req.json({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc)}, function(er, resp, body) {
+          request.json({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc)}, function(er, resp, body) {
             if(er) return self.callback && self.callback(er);
 
             if(resp.status === 409) {
@@ -146,7 +146,7 @@ Query.prototype.get = function(callback) {
               return self.callback && self.callback(new Error('Error when storing view: ' + JSON.stringify(body)));
 
             // View saved. One more try.
-            req.json({uri:self.url()}, function(er, resp, body) {
+            request.json({uri:self.url()}, function(er, resp, body) {
               if(er) throw er;
 
               if(resp.status === 200)
