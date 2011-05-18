@@ -127,7 +127,9 @@ Query.prototype.get = function(callback) {
         , map = [ 'function(doc) '+BEGIN
                 , '  var re = /^' + self.type + '\\//;'
                 , '  var match = re.exec(doc._id);'
-                , '  if(match) '+BEGIN
+                , '  if(doc.type === "' + self.type + '"'
+                , '  || /^' + self.type + '\\//.test(doc._id)'
+                , '  ) '+BEGIN
                 , '    emit('+fields+', doc);'
                 , '  '+END
                 , ''+END
