@@ -1,4 +1,4 @@
-// Query Couch
+// Tam
 //
 // Arbitrary CouchDB queries.
 
@@ -12,10 +12,10 @@ if(!define) define = function(deps, module_def) {
 
 define(['./jquery.request'], function(request) {
 
-function Query (type) {
+function Tam (type) {
   var self = this;
 
-  self.ddoc = Query.ddoc || '_design/example';
+  self.ddoc = Tam.ddoc || '_design/example';
   self.include_docs = false;
   self.query_limit = null;
   self.filters = [];
@@ -27,14 +27,14 @@ function Query (type) {
   function default_callback(er, resp, body) {
     // Default callback for receiving a view response.
     if(window.console && console && console.log)
-      console.log('Query response ' + self.url() + ': er:%o resp:%o body:%o', er, resp, body);
+      console.log('Tam response ' + self.url() + ': er:%o resp:%o body:%o', er, resp, body);
   }
   self.callback = default_callback;
 }
 
-Query.ddoc = null;
+Tam.ddoc = null;
 
-Query.prototype.filter = function(condition, val) {
+Tam.prototype.filter = function(condition, val) {
   var self = this;
 
   var match = /^(.*) (.*?)$/.exec(condition);
@@ -54,7 +54,7 @@ Query.prototype.filter = function(condition, val) {
   return self.valid();
 }
 
-Query.prototype.order = function(instruction) {
+Tam.prototype.order = function(instruction) {
   var self = this
     , match
     ;
@@ -82,7 +82,7 @@ Query.prototype.order = function(instruction) {
   }
 }
 
-Query.prototype.valid = function() {
+Tam.prototype.valid = function() {
   var self = this;
 
   // Building a URL will confirm validity.
@@ -93,13 +93,13 @@ Query.prototype.valid = function() {
   return self;
 }
 
-Query.prototype.cb = function(callback) {
+Tam.prototype.cb = function(callback) {
   var self = this;
   self.callback = callback;
   return self;
 }
 
-Query.prototype.get = function(callback) {
+Tam.prototype.get = function(callback) {
   var self = this;
 
   if(callback)
@@ -178,7 +178,7 @@ Query.prototype.get = function(callback) {
   return self;
 }
 
-Query.prototype.view = function() {
+Tam.prototype.view = function() {
   var self = this;
 
 
@@ -188,7 +188,7 @@ Query.prototype.view = function() {
          ].join('');
 }
 
-Query.prototype.name = function() {
+Tam.prototype.name = function() {
   var self = this;
 
   var columns = [ 'QC', self.type ];
@@ -198,7 +198,7 @@ Query.prototype.name = function() {
   return columns.join('-');
 }
 
-Query.prototype.url = function() {
+Tam.prototype.url = function() {
   var self = this;
 
   var kvs = []
@@ -212,7 +212,7 @@ Query.prototype.url = function() {
   return self.view() + '?' + kvs.join('&');
 }
 
-Query.prototype.query = function() {
+Tam.prototype.query = function() {
   var self = this;
   var query = { reduce: false
               , include_docs: self.include_docs
@@ -285,11 +285,11 @@ Query.prototype.query = function() {
   return query;
 }
 
-Query.prototype.doc   = function() { this.include_doc = true ; return this };
-Query.prototype.nodoc = function() { this.include_doc = false; return this };
-Query.prototype.limit = function(lim) { this.query_limit = lim; return this };
+Tam.prototype.doc   = function() { this.include_doc = true ; return this };
+Tam.prototype.nodoc = function() { this.include_doc = false; return this };
+Tam.prototype.limit = function(lim) { this.query_limit = lim; return this };
 
-return Query;
+return Tam;
 
   });
 })();
