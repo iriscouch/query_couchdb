@@ -293,8 +293,8 @@ Tam.prototype.query = function() {
   return query;
 }
 
-Tam.prototype.doc   = function() { this.include_doc = true ; return this };
-Tam.prototype.nodoc = function() { this.include_doc = false; return this };
+Tam.prototype.doc   = function() { this.include_docs = true ; return this };
+Tam.prototype.nodoc = function() { this.include_docs = false; return this };
 Tam.prototype.limit = function(lim) { this.query_limit = lim; return this };
 
 return Tam;
