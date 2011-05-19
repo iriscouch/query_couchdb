@@ -99,6 +99,32 @@ Tam.prototype.cb = function(callback) {
   return self;
 }
 
+Tam.prototype._map = function() {
+  var self = this;
+  var fields = self.filters.map(function(x) {
+    var str = JSON.stringify(x.field);
+    return 'doc[' + str + '] || null';
+  });
+  fields = '[' + fields.join(', ') + ']';
+
+  var map = function(doc) {
+    var re, match;
+    var fields = XXfieldsXX;
+    if(doc.type === 'XXtypeXX')
+      return emit(fields, 1);
+
+    re = /^XXtypeXX\//;
+    match = re.exec(doc._id);
+    if(match)
+      return emit(fields, 1);
+  }
+
+  map = map.toString()
+           .replace(/XXtypeXX/g, self.type)
+           .replace(/XXfieldsXX/g, fields);
+  return map;
+}
+
 Tam.prototype.get = function(callback) {
   var self = this;
 
@@ -116,25 +142,7 @@ Tam.prototype.get = function(callback) {
 
     else if(resp.status === 404 && body.error === 'not_found') {
       // Need to create this query.
-      var fields = [];
-      self.filters.forEach(function(filter) {
-        fields.push('doc[' + JSON.stringify(filter.field) + '] || null');
-      })
-      fields = '[' + fields.join(', ') + ']';
-
-      var BEGIN = '{'
-        , END   = '}'
-        , map = [ 'function(doc) '+BEGIN
-                , '  var re = /^' + self.type + '\\//;'
-                , '  var match = re.exec(doc._id);'
-                , '  if(doc.type === "' + self.type + '"'
-                , '  || /^' + self.type + '\\//.test(doc._id)'
-                , '  ) '+BEGIN
-                , '    emit('+fields+', doc);'
-                , '  '+END
-                , ''+END
-                ].join('\n')
-        ;
+      var map = self._map();
 
       var reduce = '_count';
 
