@@ -10,7 +10,7 @@ if(!define) define = function(deps, module_def) {
   return module_def(window.jQuery.request);
 }
 
-define(['./jquery.request'], function(request) {
+define(['request.jquery'], function(request) {
 
 function Tam (type) {
   var self = this;
