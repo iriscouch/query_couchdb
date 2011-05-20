@@ -144,7 +144,7 @@ Tam.prototype.get = function(callback) {
       // Need to create this query.
       var map = self._map();
 
-      var reduce = '_count';
+      var reduce = '_stats';
 
       function store_view(tries) {
         if(tries <= 0)
