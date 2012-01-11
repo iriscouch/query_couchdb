@@ -10,7 +10,7 @@ if(!define) define = function(deps, module_def) {
   return module_def(window.jQuery.request);
 }
 
-define(['request.jquery'], function(request) {
+define(['request'], function(request) {
 
 function Tam (type) {
   var self = this;
@@ -131,7 +131,7 @@ Tam.prototype.get = function(callback) {
   if(callback)
     self.cb(callback);
 
-  request.json({uri:self.url()}, function(er, resp, body) {
+  request({uri:self.url(), 'json':true}, function(er, resp, body) {
     if(er) throw er;
 
     if(resp.status === 200)
@@ -155,7 +155,7 @@ Tam.prototype.get = function(callback) {
 
           ddoc.views = ddoc.views || {};
           ddoc.views[self.name()] = { 'map':map, 'reduce':reduce };
-          request.json({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc)}, function(er, resp, body) {
+          request({method:'PUT', uri:self.ddoc, body:JSON.stringify(ddoc), 'json':true}, function(er, resp, body) {
             if(er) return self.callback && self.callback(er);
 
             if(resp.status === 409) {
@@ -167,7 +167,7 @@ Tam.prototype.get = function(callback) {
               return self.callback && self.callback(new Error('Error when storing view: ' + JSON.stringify(body)));
 
             // View saved. One more try.
-            request.json({uri:self.url()}, function(er, resp, body) {
+            request({uri:self.url(), 'json':true}, function(er, resp, body) {
               if(er) throw er;
 
               if(resp.status === 200)
